@@ -1,0 +1,899 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Auto Create Invoice Design Tool</title>
+  <style>
+    :root {
+      --ink: #18212f;
+      --muted: #667085;
+      --line: #d9e0e8;
+      --paper: #ffffff;
+      --field: #f6f8fb;
+      --accent: #116d6e;
+      --accent-strong: #0a4b4c;
+      --warn: #a44922;
+      --bg: #eef3f6;
+      --shadow: 0 18px 45px rgba(24, 33, 47, .12);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        linear-gradient(135deg, rgba(17, 109, 110, .08), transparent 38%),
+        linear-gradient(315deg, rgba(164, 73, 34, .07), transparent 35%),
+        var(--bg);
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit;
+    }
+
+    .app-shell {
+      display: grid;
+      grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+      gap: 22px;
+      max-width: 1420px;
+      margin: 0 auto;
+      padding: 22px;
+    }
+
+    .toolbar {
+      position: sticky;
+      top: 22px;
+      align-self: start;
+      background: rgba(255, 255, 255, .86);
+      border: 1px solid rgba(217, 224, 232, .85);
+      border-radius: 8px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+    }
+
+    .brand {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 8px;
+      color: #fff;
+      background: var(--accent);
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: 1rem;
+      line-height: 1.25;
+    }
+
+    .subtle {
+      color: var(--muted);
+      font-size: .84rem;
+      line-height: 1.45;
+    }
+
+    .panel {
+      display: grid;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .panel-title {
+      font-size: .76rem;
+      font-weight: 800;
+      color: var(--accent-strong);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    label {
+      color: var(--muted);
+      font-size: .78rem;
+      font-weight: 700;
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--field);
+      color: var(--ink);
+      padding: 10px 11px;
+      outline: none;
+      transition: border-color .18s, background .18s, box-shadow .18s;
+    }
+
+    textarea {
+      min-height: 78px;
+      resize: vertical;
+      line-height: 1.45;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      border-color: var(--accent);
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(17, 109, 110, .12);
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .btn {
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 42px;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      padding: 10px 12px;
+      cursor: pointer;
+      font-weight: 800;
+      color: #fff;
+      background: var(--accent);
+    }
+
+    .btn.secondary {
+      color: var(--ink);
+      border-color: var(--line);
+      background: #fff;
+    }
+
+    .btn.warn {
+      color: #fff;
+      background: var(--warn);
+    }
+
+    .invoice-wrap {
+      min-width: 0;
+    }
+
+    .invoice {
+      max-width: 980px;
+      min-height: 1180px;
+      margin: 0 auto;
+      background: var(--paper);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .invoice-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(260px, .9fr);
+      gap: 34px;
+      padding: 48px 52px 36px;
+      color: #fff;
+      background: var(--accent-strong);
+    }
+
+    .invoice-title {
+      font-size: clamp(2.4rem, 5vw, 4.5rem);
+      line-height: .92;
+      font-weight: 900;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    .company-block {
+      align-self: end;
+      display: grid;
+      gap: 12px;
+      text-align: right;
+    }
+
+    .company-name {
+      font-size: 1.35rem;
+      font-weight: 850;
+    }
+
+    .company-meta {
+      white-space: pre-line;
+      color: rgba(255, 255, 255, .78);
+      line-height: 1.5;
+    }
+
+    .invoice-body {
+      padding: 42px 52px 48px;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(240px, .55fr);
+      gap: 32px;
+      align-items: start;
+      margin-bottom: 34px;
+    }
+
+    .bill-card {
+      border-left: 4px solid var(--accent);
+      padding-left: 18px;
+    }
+
+    .bill-title,
+    .meta-title {
+      margin-bottom: 10px;
+      color: var(--accent-strong);
+      font-size: .78rem;
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .bill-name {
+      margin-bottom: 8px;
+      font-size: 1.18rem;
+      font-weight: 850;
+    }
+
+    .bill-address {
+      white-space: pre-line;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .meta-table {
+      display: grid;
+      gap: 9px;
+    }
+
+    .meta-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 9px;
+      color: var(--muted);
+      font-size: .92rem;
+    }
+
+    .meta-line strong {
+      color: var(--ink);
+      text-align: right;
+    }
+
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .items-table th {
+      padding: 13px 12px;
+      color: #fff;
+      background: var(--accent);
+      font-size: .78rem;
+      letter-spacing: .06em;
+      text-align: left;
+      text-transform: uppercase;
+    }
+
+    .items-table td {
+      border-bottom: 1px solid var(--line);
+      padding: 12px;
+      vertical-align: top;
+    }
+
+    .items-table input {
+      border-color: transparent;
+      background: transparent;
+      padding: 7px 6px;
+    }
+
+    .items-table input:focus {
+      border-color: var(--accent);
+      background: var(--field);
+    }
+
+    .numeric {
+      text-align: right;
+    }
+
+    .item-total {
+      min-width: 90px;
+      padding-top: 8px;
+      text-align: right;
+      font-weight: 850;
+    }
+
+    .remove-item {
+      width: 34px;
+      height: 34px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      color: var(--warn);
+      background: #fff;
+      cursor: pointer;
+      font-weight: 900;
+    }
+
+    .add-line {
+      margin-top: 14px;
+      color: var(--accent-strong);
+      border-color: rgba(17, 109, 110, .28);
+      background: rgba(17, 109, 110, .08);
+    }
+
+    .invoice-foot {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(260px, 360px);
+      gap: 32px;
+      margin-top: 38px;
+      align-items: start;
+    }
+
+    .notes {
+      min-height: 120px;
+      color: var(--muted);
+      line-height: 1.55;
+      white-space: pre-line;
+    }
+
+    .totals {
+      display: grid;
+      gap: 11px;
+    }
+
+    .total-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      color: var(--muted);
+    }
+
+    .total-line strong {
+      color: var(--ink);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .grand-total {
+      margin-top: 8px;
+      border-top: 2px solid var(--ink);
+      padding-top: 16px;
+      font-size: 1.35rem;
+      font-weight: 950;
+      color: var(--ink);
+    }
+
+    .signature {
+      margin-top: 42px;
+      max-width: 300px;
+      border-top: 1px solid var(--ink);
+      padding-top: 12px;
+      color: var(--muted);
+      font-size: .88rem;
+    }
+
+    [contenteditable="true"] {
+      border-radius: 4px;
+      outline: 0;
+    }
+
+    [contenteditable="true"]:focus {
+      box-shadow: 0 0 0 3px rgba(17, 109, 110, .14);
+      background: rgba(255, 255, 255, .16);
+    }
+
+    @media (max-width: 980px) {
+      .app-shell {
+        grid-template-columns: 1fr;
+        padding: 14px;
+      }
+
+      .toolbar {
+        position: static;
+      }
+
+      .invoice-head,
+      .summary-grid,
+      .invoice-foot {
+        grid-template-columns: 1fr;
+      }
+
+      .company-block {
+        text-align: left;
+      }
+
+      .invoice-head,
+      .invoice-body {
+        padding-left: 24px;
+        padding-right: 24px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .row,
+      .actions {
+        grid-template-columns: 1fr;
+      }
+
+      .invoice {
+        min-height: 0;
+      }
+
+      .items-table,
+      .items-table thead,
+      .items-table tbody,
+      .items-table tr,
+      .items-table th,
+      .items-table td {
+        display: block;
+      }
+
+      .items-table thead {
+        display: none;
+      }
+
+      .items-table tr {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        margin-bottom: 12px;
+        padding: 8px;
+      }
+
+      .items-table td {
+        border-bottom: 0;
+        padding: 5px;
+      }
+
+      .item-total {
+        text-align: left;
+      }
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      .app-shell {
+        display: block;
+        max-width: none;
+        padding: 0;
+      }
+
+      .toolbar {
+        display: none;
+      }
+
+      .invoice {
+        width: 100%;
+        min-height: 100vh;
+        border-radius: 0;
+        box-shadow: none;
+      }
+
+      .remove-item,
+      .add-line {
+        display: none;
+      }
+
+      input,
+      textarea {
+        border-color: transparent;
+        background: transparent;
+        padding-left: 0;
+        padding-right: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app-shell">
+    <aside class="toolbar" aria-label="Invoice controls">
+      <div class="brand">
+        <div class="brand-mark">AI</div>
+        <div>
+          <h1>Auto Create Invoice Design Tool</h1>
+          <p class="subtle">單檔 HTML，可直接部署到 GitHub Pages。</p>
+        </div>
+      </div>
+
+      <section class="panel">
+        <div class="panel-title">Invoice Setup</div>
+        <div class="row">
+          <div class="field">
+            <label for="invoiceNumber">發票編號</label>
+            <input id="invoiceNumber" data-bind="invoiceNumber" value="INV-2026-001">
+          </div>
+          <div class="field">
+            <label for="currency">幣別</label>
+            <select id="currency" data-bind="currency">
+              <option value="TWD">TWD</option>
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+              <option value="JPY">JPY</option>
+              <option value="HKD">HKD</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="issueDate">開立日期</label>
+            <input id="issueDate" data-bind="issueDate" type="date">
+          </div>
+          <div class="field">
+            <label for="dueDate">付款期限</label>
+            <input id="dueDate" data-bind="dueDate" type="date">
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="taxRate">稅率 %</label>
+            <input id="taxRate" data-bind="taxRate" type="number" min="0" step="0.1" value="5">
+          </div>
+          <div class="field">
+            <label for="discount">折扣</label>
+            <input id="discount" data-bind="discount" type="number" min="0" step="1" value="0">
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title">Company</div>
+        <div class="field">
+          <label for="companyName">公司名稱</label>
+          <input id="companyName" data-bind="companyName" value="Your Studio Co.">
+        </div>
+        <div class="field">
+          <label for="companyMeta">公司資訊</label>
+          <textarea id="companyMeta" data-bind="companyMeta">台北市信義區設計路 88 號
+hello@example.com
++886 2 1234 5678</textarea>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title">Client</div>
+        <div class="field">
+          <label for="clientName">客戶名稱</label>
+          <input id="clientName" data-bind="clientName" value="Client Company Ltd.">
+        </div>
+        <div class="field">
+          <label for="clientAddress">客戶資訊</label>
+          <textarea id="clientAddress" data-bind="clientAddress">採購部
+client@example.com
+台中市西區商務路 16 號</textarea>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title">Notes</div>
+        <div class="field">
+          <label for="notesInput">備註</label>
+          <textarea id="notesInput" data-bind="notes">請於付款期限前完成匯款。若需變更抬頭或統編，請於三個工作天內告知。</textarea>
+        </div>
+      </section>
+
+      <div class="actions">
+        <button class="btn" id="printBtn" type="button">列印 / PDF</button>
+        <button class="btn secondary" id="sampleBtn" type="button">範例資料</button>
+        <button class="btn secondary" id="saveBtn" type="button">儲存</button>
+        <button class="btn warn" id="resetBtn" type="button">重置</button>
+      </div>
+    </aside>
+
+    <section class="invoice-wrap" aria-label="Invoice preview">
+      <article class="invoice">
+        <header class="invoice-head">
+          <div>
+            <div class="invoice-title" contenteditable="true" data-bind="title">Invoice</div>
+          </div>
+          <div class="company-block">
+            <div class="company-name" id="companyNamePreview">Your Studio Co.</div>
+            <div class="company-meta" id="companyMetaPreview">台北市信義區設計路 88 號
+hello@example.com
++886 2 1234 5678</div>
+          </div>
+        </header>
+
+        <div class="invoice-body">
+          <div class="summary-grid">
+            <section class="bill-card">
+              <div class="bill-title">Bill To</div>
+              <div class="bill-name" id="clientNamePreview">Client Company Ltd.</div>
+              <div class="bill-address" id="clientAddressPreview">採購部
+client@example.com
+台中市西區商務路 16 號</div>
+            </section>
+
+            <section>
+              <div class="meta-title">Details</div>
+              <div class="meta-table">
+                <div class="meta-line"><span>Invoice No.</span><strong id="invoiceNumberPreview">INV-2026-001</strong></div>
+                <div class="meta-line"><span>Issue Date</span><strong id="issueDatePreview"></strong></div>
+                <div class="meta-line"><span>Due Date</span><strong id="dueDatePreview"></strong></div>
+                <div class="meta-line"><span>Currency</span><strong id="currencyPreview">TWD</strong></div>
+              </div>
+            </section>
+          </div>
+
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th style="width: 42%">項目</th>
+                <th class="numeric" style="width: 15%">數量</th>
+                <th class="numeric" style="width: 18%">單價</th>
+                <th class="numeric" style="width: 18%">小計</th>
+                <th style="width: 7%"></th>
+              </tr>
+            </thead>
+            <tbody id="itemsBody"></tbody>
+          </table>
+          <button class="btn secondary add-line" id="addItemBtn" type="button">新增項目</button>
+
+          <footer class="invoice-foot">
+            <section>
+              <div class="meta-title">Notes</div>
+              <div class="notes" id="notesPreview"></div>
+              <div class="signature">Authorized Signature</div>
+            </section>
+
+            <section class="totals" aria-label="Invoice totals">
+              <div class="total-line"><span>Subtotal</span><strong id="subtotalPreview">$0</strong></div>
+              <div class="total-line"><span>Discount</span><strong id="discountPreview">-$0</strong></div>
+              <div class="total-line"><span>Tax</span><strong id="taxPreview">$0</strong></div>
+              <div class="total-line grand-total"><span>Total</span><strong id="totalPreview">$0</strong></div>
+            </section>
+          </footer>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    const storageKey = "auto-invoice-design-tool";
+    const today = new Date();
+    const plusDays = new Date(today);
+    plusDays.setDate(today.getDate() + 14);
+
+    const defaults = {
+      title: "Invoice",
+      invoiceNumber: "INV-2026-001",
+      currency: "TWD",
+      issueDate: toDateInput(today),
+      dueDate: toDateInput(plusDays),
+      taxRate: 5,
+      discount: 0,
+      companyName: "Your Studio Co.",
+      companyMeta: "台北市信義區設計路 88 號\nhello@example.com\n+886 2 1234 5678",
+      clientName: "Client Company Ltd.",
+      clientAddress: "採購部\nclient@example.com\n台中市西區商務路 16 號",
+      notes: "請於付款期限前完成匯款。若需變更抬頭或統編，請於三個工作天內告知。",
+      items: [
+        { description: "品牌識別設計", quantity: 1, price: 28000 },
+        { description: "發票版型與前端整合", quantity: 1, price: 18000 },
+        { description: "維護與交付文件", quantity: 2, price: 3500 }
+      ]
+    };
+
+    let state = loadState();
+
+    const bindTargets = [...document.querySelectorAll("[data-bind]")];
+    const itemsBody = document.getElementById("itemsBody");
+
+    function toDateInput(date) {
+      return date.toISOString().slice(0, 10);
+    }
+
+    function loadState() {
+      try {
+        return { ...defaults, ...JSON.parse(localStorage.getItem(storageKey) || "{}") };
+      } catch {
+        return { ...defaults };
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem(storageKey, JSON.stringify(state));
+    }
+
+    function formatMoney(value) {
+      const currency = state.currency || "TWD";
+      return new Intl.NumberFormat("zh-TW", {
+        style: "currency",
+        currency,
+        maximumFractionDigits: currency === "JPY" || currency === "TWD" ? 0 : 2
+      }).format(Number(value) || 0);
+    }
+
+    function formatDate(value) {
+      if (!value) return "";
+      return new Intl.DateTimeFormat("zh-TW", {
+        year: "numeric",
+        month: "short",
+        day: "2-digit"
+      }).format(new Date(`${value}T00:00:00`));
+    }
+
+    function setText(id, value) {
+      document.getElementById(id).textContent = value || "";
+    }
+
+    function renderBindings() {
+      bindTargets.forEach((el) => {
+        const key = el.dataset.bind;
+        if (document.activeElement === el) return;
+        if (el.isContentEditable) {
+          el.textContent = state[key] ?? "";
+        } else {
+          el.value = state[key] ?? "";
+        }
+      });
+    }
+
+    function renderItems() {
+      itemsBody.innerHTML = "";
+      state.items.forEach((item, index) => {
+        const total = (Number(item.quantity) || 0) * (Number(item.price) || 0);
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td><input aria-label="項目描述" data-item="${index}" data-field="description" value="${escapeAttribute(item.description)}"></td>
+          <td><input class="numeric" aria-label="數量" data-item="${index}" data-field="quantity" type="number" min="0" step="0.01" value="${item.quantity}"></td>
+          <td><input class="numeric" aria-label="單價" data-item="${index}" data-field="price" type="number" min="0" step="1" value="${item.price}"></td>
+          <td><div class="item-total">${formatMoney(total)}</div></td>
+          <td><button class="remove-item" type="button" aria-label="刪除項目" data-remove="${index}">×</button></td>
+        `;
+        itemsBody.appendChild(row);
+      });
+    }
+
+    function escapeAttribute(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+    function calculateTotals() {
+      const subtotal = state.items.reduce((sum, item) => {
+        return sum + (Number(item.quantity) || 0) * (Number(item.price) || 0);
+      }, 0);
+      const discount = Math.min(Number(state.discount) || 0, subtotal);
+      const taxable = Math.max(subtotal - discount, 0);
+      const tax = taxable * ((Number(state.taxRate) || 0) / 100);
+      return { subtotal, discount, tax, total: taxable + tax };
+    }
+
+    function renderPreview() {
+      setText("companyNamePreview", state.companyName);
+      setText("companyMetaPreview", state.companyMeta);
+      setText("clientNamePreview", state.clientName);
+      setText("clientAddressPreview", state.clientAddress);
+      setText("invoiceNumberPreview", state.invoiceNumber);
+      setText("issueDatePreview", formatDate(state.issueDate));
+      setText("dueDatePreview", formatDate(state.dueDate));
+      setText("currencyPreview", state.currency);
+      setText("notesPreview", state.notes);
+
+      const totals = calculateTotals();
+      setText("subtotalPreview", formatMoney(totals.subtotal));
+      setText("discountPreview", `-${formatMoney(totals.discount)}`);
+      setText("taxPreview", formatMoney(totals.tax));
+      setText("totalPreview", formatMoney(totals.total));
+    }
+
+    function render() {
+      renderBindings();
+      renderItems();
+      renderPreview();
+    }
+
+    bindTargets.forEach((el) => {
+      const eventName = el.isContentEditable ? "input" : "input";
+      el.addEventListener(eventName, () => {
+        const key = el.dataset.bind;
+        state[key] = el.isContentEditable ? el.textContent : el.value;
+        if (key === "currency") {
+          renderItems();
+        }
+        renderPreview();
+        saveState();
+      });
+    });
+
+    itemsBody.addEventListener("input", (event) => {
+      const target = event.target;
+      const index = Number(target.dataset.item);
+      const field = target.dataset.field;
+      if (!Number.isInteger(index) || !field) return;
+      state.items[index][field] = field === "description" ? target.value : Number(target.value);
+      const row = target.closest("tr");
+      const rowTotal = (Number(state.items[index].quantity) || 0) * (Number(state.items[index].price) || 0);
+      row.querySelector(".item-total").textContent = formatMoney(rowTotal);
+      renderPreview();
+      saveState();
+    });
+
+    itemsBody.addEventListener("click", (event) => {
+      const removeIndex = event.target.dataset.remove;
+      if (removeIndex === undefined) return;
+      state.items.splice(Number(removeIndex), 1);
+      if (state.items.length === 0) {
+        state.items.push({ description: "New item", quantity: 1, price: 0 });
+      }
+      render();
+      saveState();
+    });
+
+    document.getElementById("addItemBtn").addEventListener("click", () => {
+      state.items.push({ description: "New item", quantity: 1, price: 0 });
+      render();
+      saveState();
+    });
+
+    document.getElementById("printBtn").addEventListener("click", () => window.print());
+    document.getElementById("saveBtn").addEventListener("click", saveState);
+    document.getElementById("sampleBtn").addEventListener("click", () => {
+      state = {
+        ...state,
+        companyName: "Northline Creative",
+        companyMeta: "12F, No. 45, Songren Rd, Taipei\nbilling@northline.example\n+886 2 8765 4321",
+        clientName: "Aurora Market",
+        clientAddress: "Marketing Team\nfinance@aurora.example\n高雄市前鎮區港景路 21 號",
+        invoiceNumber: "INV-2026-052",
+        taxRate: 5,
+        discount: 1500,
+        items: [
+          { description: "Landing page visual system", quantity: 1, price: 36000 },
+          { description: "Invoice generator implementation", quantity: 1, price: 24000 },
+          { description: "QA and deployment support", quantity: 3, price: 4200 }
+        ]
+      };
+      render();
+      saveState();
+    });
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      localStorage.removeItem(storageKey);
+      state = { ...defaults, items: defaults.items.map((item) => ({ ...item })) };
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>
